@@ -74,5 +74,7 @@ document.querySelectorAll(".add-to-cart-button").forEach((button) => {
     cart.push({ productId, quantity: 1 });
 
     console.log(`Added  to cart. Current cart:`, cart);
+
+    document.querySelector(".cart-quantity").textContent = cart.length;
   });
 });
