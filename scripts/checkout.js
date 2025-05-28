@@ -6,6 +6,8 @@ const cartMoneyRaw = cart.reduce((total, item) => {
   let product = products.find((p) => p.id === item.productId);
   return total + (product.priceCents / 100) * item.quantity;
 }, 0);
+// First, modify the deliveryPriceTax variable to be an object that tracks per product
+let deliveryPrices = {};
 
 document.querySelector(
   ".checkout-header-middle-section"
@@ -15,12 +17,6 @@ document.querySelector(
 const cartMoney = cartMoneyRaw.toFixed(2);
 
 cart.forEach((item) => {
-  // let tax = 0;
-  // document.querySelector(".payment-summary-tax").textContent = `$${() => {
-  //   tax = (cartMoneyRaw + 4.99) * 0.1;
-  //   return tax.toFixed(2);
-  // }}`;
-
   const today = dayjs();
   const FreedeliveryDate = today.add(4, "day").format("dddd, MMMM D");
   const FastdeliveryDate = today.add(2, "day").format("dddd, MMMM D");
@@ -30,7 +26,7 @@ cart.forEach((item) => {
     ".order-summary"
   ).innerHTML += `<div class="cart-item-container">
             <div class="delivery-date">
-              Delivery date: Wednesday, June 15
+             Delivery date: ${FreedeliveryDate}
             </div>
 
             <div class="cart-item-details-grid">
@@ -71,9 +67,9 @@ cart.forEach((item) => {
 
                 <div class="delivery-option">
                   <input type="radio" class="delivery-option-input"
-                    name="delivery-option-2">
+                    name="delivery-option-2" checked data-delivery-date="${FreedeliveryDate}">
                   <div>
-                    <div class="delivery-option-date">
+                    <div class="delivery-option-date" data-delevery-price="0" data-delivery-date="${FreedeliveryDate}">
                       ${FreedeliveryDate}
                     </div>
                     <div class="delivery-option-price">
@@ -83,7 +79,7 @@ cart.forEach((item) => {
                 </div>
                 <div class="delivery-option">
                   <input type="radio" checked class="delivery-option-input"
-                    name="delivery-option-2">
+                    name="delivery-option-2" data-delevery-price="499" data-delivery-date="${FastdeliveryDate}">
                   <div>
                     <div class="delivery-option-date">
                      ${FastdeliveryDate}
@@ -95,7 +91,7 @@ cart.forEach((item) => {
                 </div>
                 <div class="delivery-option">
                   <input type="radio" class="delivery-option-input"
-                    name="delivery-option-2">
+                    name="delivery-option-2"  data-delevery-price="999" data-delivery-date="${superdeliveryDate}">
                   <div>
                     <div class="delivery-option-date">
                       ${superdeliveryDate}
@@ -108,6 +104,50 @@ cart.forEach((item) => {
               </div>
             </div>
           </div>`;
+  document.querySelectorAll(".delivery-option-input").forEach((input) => {
+    input.addEventListener("change", (event) => {
+      const productId = event.target
+        .closest(".cart-item-container")
+        .querySelector(".update-quantity-link").dataset.productId;
+      deliveryPrices[productId] = parseFloat(
+        event.target.dataset.deleveryPrice || 0
+      );
+
+      // Update delivery date for this specific product
+      const container = event.target.closest(".cart-item-container");
+      container.querySelector(
+        ".delivery-date"
+      ).innerHTML = `Delivery date: ${event.target.dataset.deliveryDate}`;
+
+      // Calculate total delivery price
+      const totalDeliveryPrice = Object.values(deliveryPrices).reduce(
+        (sum, price) => sum + price,
+        0
+      );
+
+      // Update shipping & handling display
+      document.querySelector(".payment-summary-tax").innerHTML = `$${(
+        totalDeliveryPrice / 100
+      ).toFixed(2)}`;
+
+      // Update total before tax
+      document.querySelector(
+        ".payment-summary-money-before-tax"
+      ).innerHTML = `$${(cartMoneyRaw + totalDeliveryPrice / 100).toFixed(2)}`;
+
+      // Update tax amount
+      const taxAmount = (cartMoneyRaw + totalDeliveryPrice / 100) * 0.1;
+      document.querySelector(
+        ".payment-summary-money"
+      ).innerHTML = `$${taxAmount.toFixed(2)}`;
+
+      // Update order total
+      const orderTotal = (cartMoneyRaw + totalDeliveryPrice / 100) * 1.1;
+      document.querySelector(
+        ".total-row .payment-summary-money"
+      ).innerHTML = `$${orderTotal.toFixed(2)}`;
+    });
+  });
 });
 document.querySelectorAll(".delete-quantity-link").forEach((link) => {
   link.addEventListener("click", (event) => {
@@ -116,49 +156,57 @@ document.querySelectorAll(".delete-quantity-link").forEach((link) => {
   });
 });
 
+console.log(deliveryPrices);
 
-document.querySelector(
-  ".payment-summary"
-).innerHTML = ` <div class="payment-summary-title">
-            Order Summary
-          </div>
+// Update the payment summary to use the total delivery price
+const getTotalDeliveryPrice = () =>
+  Object.values(deliveryPrices).reduce((sum, price) => sum + price, 0);
 
-          <div class="payment-summary-row">
-            <div>Items ${cart.length}:</div>
-            <div class="payment-summary-money">$${cartMoney}</div>
-          </div>
+document.querySelector(".payment-summary").innerHTML = `
+  <div class="payment-summary-title">
+    Order Summary
+  </div>
 
-          <div class="payment-summary-row">
-            <div>Shipping &amp; handling:</div>
-            <div class="payment-summary-money payment-summary-tax">$4.99</div>
-          </div>
+  <div class="payment-summary-row">
+    <div>Items ${cart.length}:</div>
+    <div class="payment-summary-money">$${cartMoney}</div>
+  </div>
 
-          <div class="payment-summary-row subtotal-row">
-            <div>Total before tax:</div>
-            <div class="payment-summary-money payment-summary-money-before-tax">$${(
-              cartMoneyRaw + 4.99
-            ).toFixed(2)}</div>
-          </div>
+  <div class="payment-summary-row">
+    <div>Shipping &amp; handling:</div>
+    <div class="payment-summary-money payment-summary-tax">$${(
+      getTotalDeliveryPrice() / 100
+    ).toFixed(2)}</div>
+  </div>
 
-          <div class="payment-summary-row">
-            <div>Estimated tax (10%):</div>
-            <div class="payment-summary-money">$${(
-              (cartMoneyRaw + 4.99) *
-              0.1
-            ).toFixed(2)}</div>
-          </div>
+  <div class="payment-summary-row subtotal-row">
+    <div>Total before tax:</div>
+    <div class="payment-summary-money payment-summary-money-before-tax">$${(
+      cartMoneyRaw +
+      getTotalDeliveryPrice() / 100
+    ).toFixed(2)}</div>
+  </div>
 
-          <div class="payment-summary-row total-row">
-            <div>Order total:</div>
-            <div class="payment-summary-money">$${(
-              (cartMoneyRaw + 4.99) *
-              1.1
-            ).toFixed(2)}</div>
-          </div>
+  <div class="payment-summary-row">
+    <div>Estimated tax (10%):</div>
+    <div class="payment-summary-money">$${(
+      (cartMoneyRaw + getTotalDeliveryPrice() / 100) *
+      0.1
+    ).toFixed(2)}</div>
+  </div>
 
-          <button class="place-order-button button-primary">
-            Place your order
-          </button>`;
+  <div class="payment-summary-row total-row">
+    <div>Order total:</div>
+    <div class="payment-summary-money">$${(
+      (cartMoneyRaw + getTotalDeliveryPrice() / 100) *
+      1.1
+    ).toFixed(2)}</div>
+  </div>
+ <a href="orders.html" >
+  <button class="place-order-button button-primary" >
+    Place your order
+  </button>
+  </a>`;
 
 // Add event listeners after creating the elements
 document.querySelectorAll(".update-quantity-link").forEach((link) => {
@@ -166,6 +214,3 @@ document.querySelectorAll(".update-quantity-link").forEach((link) => {
     addToCart(event.target.dataset.productId);
   });
 });
-{
-  /*  */
-}
