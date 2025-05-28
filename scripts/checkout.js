@@ -15,6 +15,16 @@ document.querySelector(
 const cartMoney = cartMoneyRaw.toFixed(2);
 
 cart.forEach((item) => {
+  // let tax = 0;
+  // document.querySelector(".payment-summary-tax").textContent = `$${() => {
+  //   tax = (cartMoneyRaw + 4.99) * 0.1;
+  //   return tax.toFixed(2);
+  // }}`;
+
+  const today = dayjs();
+  const FreedeliveryDate = today.add(4, "day").format("dddd, MMMM D");
+  const FastdeliveryDate = today.add(2, "day").format("dddd, MMMM D");
+  const superdeliveryDate = today.add(1, "day").format("dddd, MMMM D");
   let product = products.find((p) => p.id === item.productId); // Changed from filter to find
   document.querySelector(
     ".order-summary"
@@ -64,7 +74,7 @@ cart.forEach((item) => {
                     name="delivery-option-2">
                   <div>
                     <div class="delivery-option-date">
-                      Tuesday, June 21
+                      ${FreedeliveryDate}
                     </div>
                     <div class="delivery-option-price">
                       FREE Shipping
@@ -76,7 +86,7 @@ cart.forEach((item) => {
                     name="delivery-option-2">
                   <div>
                     <div class="delivery-option-date">
-                      Wednesday, June 15
+                     ${FastdeliveryDate}
                     </div>
                     <div class="delivery-option-price">
                       $4.99 - Shipping
@@ -88,7 +98,7 @@ cart.forEach((item) => {
                     name="delivery-option-2">
                   <div>
                     <div class="delivery-option-date">
-                      Monday, June 13
+                      ${superdeliveryDate}
                     </div>
                     <div class="delivery-option-price">
                       $9.99 - Shipping
@@ -106,6 +116,7 @@ document.querySelectorAll(".delete-quantity-link").forEach((link) => {
   });
 });
 
+
 document.querySelector(
   ".payment-summary"
 ).innerHTML = ` <div class="payment-summary-title">
@@ -119,7 +130,7 @@ document.querySelector(
 
           <div class="payment-summary-row">
             <div>Shipping &amp; handling:</div>
-            <div class="payment-summary-money">$4.99</div>
+            <div class="payment-summary-money payment-summary-tax">$4.99</div>
           </div>
 
           <div class="payment-summary-row subtotal-row">
