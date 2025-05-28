@@ -1,4 +1,4 @@
-export const cart = [
+export const cart = JSON.parse(localStorage.getItem("cart")) || [
   {
     productId: "e43638ce-6aa0-4b85-b27f-e1d07eb678c6",
     quantity: 1,
@@ -13,15 +13,25 @@ export const cart = [
   },
 ];
 
+function saveToLocalStorage() {
+  localStorage.setItem("cart", JSON.stringify(cart));
+}
+
 export function deleteFormCart(productId) {
   console.log(cart);
-  const index = cart.filter((item) => item.productId !== productId);
+  const index = cart.findIndex((item) => item.productId === productId);
+  console.log(`Removing product with ID: ${productId} from cart.`);
+
   if (index !== -1) {
     cart.splice(index, 1);
   } else {
     console.error(`Product with ID ${productId} not found in cart.`);
   }
   console.log(`Product with ID ${productId} removed from cart.`, cart);
+  saveToLocalStorage();
+
+  window.location.reload();
+  return cart;
 }
 
 export function addToCart(productId) {
@@ -42,4 +52,5 @@ export function addToCart(productId) {
       deliveryOptionId: "1",
     });
   }
+  saveToLocalStorage();
 }

@@ -1,10 +1,16 @@
 import { cart, addToCart, deleteFormCart } from "../data/cart.js";
 import { products } from "../data/products.js";
+import dayjs from "https://unpkg.com/supersimpledev@8.5.0/dayjs/esm/index.js";
 
 const cartMoneyRaw = cart.reduce((total, item) => {
   let product = products.find((p) => p.id === item.productId);
   return total + (product.priceCents / 100) * item.quantity;
 }, 0);
+
+document.querySelector(
+  ".checkout-header-middle-section"
+).innerHTML = ` Checkout (<a class="return-to-home-link"
+            href="amazon.html">${cart.length}</a>)`;
 
 const cartMoney = cartMoneyRaw.toFixed(2);
 
